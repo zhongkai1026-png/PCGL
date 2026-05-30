@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理人报酬计算器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .calculator {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 32px;
+            width: 100%;
+            max-width: 620px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 22px;
+            color: #1a1a1a;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            font-size: 13px;
+            color: #888;
+            text-align: center;
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 18px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="number"]:focus {
+            border-color: #2563eb;
+        }
+        .radio-group {
+            display: flex;
+            gap: 12px;
+        }
+        .radio-option {
+            flex: 1;
+            position: relative;
+        }
+        .radio-option input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .radio-option label {
+            display: block;
+            padding: 14px 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            font-size: 15px;
+            margin-bottom: 0;
+        }
+        .radio-option input:checked + label {
+            border-color: #2563eb;
+            background: #eff6ff;
+            color: #2563eb;
+            font-weight: 600;
+        }
+        .calculate-btn {
+            width: 100%;
+            padding: 14px;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 24px;
+        }
+        .calculate-btn:hover {
+            background: #1d4ed8;
+        }
+
+        /* 结果区域 */
+        .result-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .result-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 14px;
+        }
+        .result-summary .label {
+            font-size: 14px;
+            color: #64748b;
+        }
+        .result-summary .value {
+            font-size: 26px;
+            font-weight: 700;
+            color: #2563eb;
+        }
+        .result-summary .unit {
+            font-size: 13px;
+            color: #94a3b8;
+            font-weight: normal;
+        }
+
+        /* 计算过程表格 */
+        .calc-process {
+            margin-top: 16px;
+        }
+        .calc-process-title {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        .calc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .calc-table th {
+            background: #e2e8f0;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            font-size: 12px;
+        }
+        .calc-table td {
+            padding: 9px 8px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .calc-table tr:last-child td {
+            border-bottom: none;
+        }
+        .calc-table .num {
+            text-align: right;
+            font-family: "Consolas", monospace;
+        }
+        .calc-table .highlight-row td {
+            background: #dbeafe;
+            font-weight: 700;
+            color: #1d4ed8;
+        }
+        .calc-table .total-row td {
+            background: #eff6ff;
+            font-weight: 700;
+            color: #1d4ed8;
+        }
+
+        /* 费率和说明 */
+        .rate-section {
+            margin-top: 16px;
+            padding: 14px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #92400e;
+        }
+        .rate-section-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .rate-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .rate-table th, .rate-table td {
+            padding: 4px 6px;
+            text-align: left;
+        }
+        .rate-table th {
+            font-weight: 600;
+        }
+        .rate-note {
+            margin-top: 8px;
+            color: #b45309;
+            font-size: 11px;
+        }
+        .law-ref {
+            margin-top: 8px;
+            padding: 10px;
+            background: #fefce8;
+            border-radius: 6px;
+            font-size: 11.5px;
+            color: #854d0e;
+            line-height: 1.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1>管理人报酬计算器</h1>
+        <p class="subtitle">依据《最高人民法院关于审理企业破产案件确定管理人报酬的规定》</p>
+
+        <div class="form-group">
+            <label for="amount">债务人最终清偿的财产价值总额（万元）</label>
+            <input type="number" id="amount" placeholder="请输入金额" min="0" step="0.01" value="500">
+        </div>
+
+        <div class="form-group">
+            <label>债权类型</label>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" name="claimType" id="ordinary" value="ordinary" checked>
+                    <label for="ordinary">普通债权</label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="claimType" id="preferred" value="preferred">
+                    <label for="preferred">优先债权</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="discount">折扣（%）</label>
+            <input type="number" id="discount" placeholder="如：100表示不打折，90表示九折" min="0" max="100" step="1" value="100">
+        </div>
+
+        <button class="calculate-btn" onclick="calculate()">计算报酬</button>
+
+        <div class="result-box" id="resultBox" style="display:none;">
+            <div class="result-summary">
+                <span class="label">管理人报酬（万元）</span>
+                <span class="value"><span id="totalFee">0</span> <span class="unit">万元</span></span>
+            </div>
+            <div class="calc-process">
+                <div class="calc-process-title">分段计算过程（普通债权标准）</div>
+                <table class="calc-table">
+                    <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th>计算区间（万元）</th>
+                            <th>适用比例上限</th>
+                            <th>区间金额（万元）</th>
+                            <th>区间报酬（万元）</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calcSteps"></tbody>
+                </table>
+            </div>
+            <div id="preferredResult" style="display:none; margin-top:16px; padding-top:14px; border-top:1px dashed #cbd5e1;">
+                <div class="calc-process-title">优先债权报酬（普通债权结果 × 10%）</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+                    <span style="color:#64748b; font-size:14px;">普通债权报酬</span>
+                    <span id="ordinaryFeeDisplay" style="font-weight:600; color:#334155;">0 万元</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+                    <span style="color:#64748b; font-size:14px;">× 10%</span>
+                    <span style="color:#94a3b8;"></span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; background:#eff6ff; border-radius:6px; padding:12px;">
+                    <span style="color:#1d4ed8; font-size:14px; font-weight:600;">优先债权报酬</span>
+                    <span id="preferredFeeDisplay" style="font-weight:700; color:#2563eb; font-size:18px;">0 万元</span>
+                </div>
+            </div>
+            <div id="discountResult" style="display:none; margin-top:16px; padding-top:14px; border-top:1px dashed #cbd5e1;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+                    <span style="color:#64748b; font-size:14px;">原始结果</span>
+                    <span id="originalFeeDisplay" style="font-weight:600; color:#334155;">0 万元</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+                    <span style="color:#64748b; font-size:14px;">折扣</span>
+                    <span id="discountRateDisplay" style="font-weight:600; color:#334155;">100%</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#f0fdf4; border-radius:6px; padding:12px;">
+                    <span style="color:#166534; font-size:14px; font-weight:600;">折扣后报酬</span>
+                    <span id="discountedFeeDisplay" style="font-weight:700; color:#16a34a; font-size:18px;">0 万元</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="rate-section" id="rateSection" style="display:none;">
+            <div class="rate-section-title">费率参照表（法释〔2007〕9号第二条、第十三条）</div>
+            <table class="rate-table">
+                <tr>
+                    <th>财产价值总额</th>
+                    <th>普通债权上限</th>
+                </tr>
+                <tr><td>≤ 100万元</td><td>12%</td></tr>
+                <tr><td>100万 ~ 500万元</td><td>10%</td></tr>
+                <tr><td>500万 ~ 1000万元</td><td>8%</td></tr>
+                <tr><td>1000万 ~ 5000万元</td><td>6%</td></tr>
+                <tr><td>5000万 ~ 1亿元</td><td>3%</td></tr>
+                <tr><td>1亿 ~ 5亿元</td><td>1%</td></tr>
+                <tr><td>> 5亿元</td><td>0.5%</td></tr>
+            </table>
+            <div class="rate-note">* 各段分别计算后累加（分段累加，非超额累进）</div>
+            <div class="law-ref">
+                <strong>第十三条（优先债权）：</strong>参照本规定第二条规定的计算方法确定，但报酬比例不得超出该条规定限制范围的10%。
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 依据：《最高人民法院关于审理企业破产案件确定管理人报酬的规定》法释〔2007〕9号
+
+        // 普通债权分段（依据第二条）
+        const ORDINARY_TIERS = [
+            { lower: 0,        upper: 100,    rate: 0.12 },
+            { lower: 100,      upper: 500,    rate: 0.10 },
+            { lower: 500,      upper: 1000,   rate: 0.08 },
+            { lower: 1000,     upper: 5000,   rate: 0.06 },
+            { lower: 5000,     upper: 10000,  rate: 0.03 },
+            { lower: 10000,    upper: 50000,  rate: 0.01 },
+            { lower: 50000,    upper: Infinity, rate: 0.005 }
+        ];
+
+        function formatNum(n) {
+            return n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+        }
+
+        function formatRate(r) {
+            return (r * 100).toFixed(1).replace(/\.0$/, '') + '%';
+        }
+
+        function calculate() {
+            const amountEl = document.getElementById('amount');
+            const claimType = document.querySelector('input[name="claimType"]:checked').value;
+            const discountEl = document.getElementById('discount');
+            const amount = parseFloat(amountEl.value);
+            let discount = parseFloat(discountEl.value);
+            if (isNaN(discount) || discount < 0) discount = 0;
+            if (discount > 100) discount = 100;
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('请输入有效的债权金额');
+                return;
+            }
+
+            // 普通债权费率分段计算
+            const steps = [];
+            let remaining = amount;
+            let ordinaryFee = 0;
+
+            for (let i = 0; i < ORDINARY_TIERS.length; i++) {
+                const tier = ORDINARY_TIERS[i];
+
+                if (remaining <= 0) break;
+
+                const tierWidth = tier.upper === Infinity ? remaining : tier.upper - tier.lower;
+                const amountInTier = Math.min(remaining, tierWidth);
+
+                if (amountInTier > 0) {
+                    const feeInTier = amountInTier * tier.rate;
+                    ordinaryFee += feeInTier;
+
+                    steps.push({
+                        index: steps.length + 1,
+                        lower: tier.lower,
+                        upper: tier.upper === Infinity ? '—' : tier.upper,
+                        rate: tier.rate,
+                        amount: amountInTier,
+                        fee: feeInTier
+                    });
+
+                    remaining -= amountInTier;
+                }
+            }
+
+            // 优先债权 = 普通债权 × 10%
+            const preferredFee = ordinaryFee * 0.10;
+
+            // 基础结果（普通债权或优先债权）
+            const baseFee = claimType === 'preferred' ? preferredFee : ordinaryFee;
+
+            // 折扣后结果
+            const discountedFee = baseFee * (discount / 100);
+
+            // 渲染计算过程
+            const tbody = document.getElementById('calcSteps');
+            tbody.innerHTML = '';
+
+            steps.forEach((step, idx) => {
+                const isLast = idx === steps.length - 1;
+                const tr = document.createElement('tr');
+                if (isLast) {
+                    tr.className = 'highlight-row';
+                }
+
+                tr.innerHTML = `
+                    <td>${step.index}</td>
+                    <td>${formatNum(step.lower)} ~ ${step.upper === '—' ? '∞' : formatNum(step.upper)}</td>
+                    <td>${formatRate(step.rate)}</td>
+                    <td class="num">${formatNum(step.amount)}</td>
+                    <td class="num">${formatNum(step.fee)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // 合计行（始终显示）
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'total-row';
+            totalRow.innerHTML = `
+                <td></td>
+                <td colspan="2">报酬合计</td>
+                <td class="num">${formatNum(amount)}</td>
+                <td class="num">${formatNum(ordinaryFee)}</td>
+            `;
+            tbody.appendChild(totalRow);
+
+            // 显示优先债权结果（仅当选择优先债权时）
+            const preferredResult = document.getElementById('preferredResult');
+            if (claimType === 'preferred') {
+                preferredResult.style.display = 'block';
+                document.getElementById('ordinaryFeeDisplay').textContent = formatNum(ordinaryFee) + ' 万元';
+                document.getElementById('preferredFeeDisplay').textContent = formatNum(preferredFee) + ' 万元';
+            } else {
+                preferredResult.style.display = 'none';
+            }
+
+            // 显示折扣结果（始终显示原价，折扣<100时额外显示折后价）
+            document.getElementById('discountResult').style.display = 'block';
+            document.getElementById('originalFeeDisplay').textContent = formatNum(baseFee) + ' 万元';
+            document.getElementById('discountRateDisplay').textContent = discount + '%';
+            if (discount < 100) {
+                document.getElementById('discountedFeeDisplay').textContent = formatNum(discountedFee) + ' 万元';
+            } else {
+                document.getElementById('discountedFeeDisplay').textContent = formatNum(baseFee) + ' 万元';
+            }
+
+            // 更新总计显示
+            document.getElementById('totalFee').textContent = formatNum(discountedFee);
+            document.getElementById('resultBox').style.display = 'block';
+            document.getElementById('rateSection').style.display = 'block';
+        }
+
+        window.onload = function() {
+            calculate();
+        };
+    </script>
+</body>
+</html>
